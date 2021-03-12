@@ -1,0 +1,8 @@
+sources:
+  "21.02":
+    url: "https://github.com/PixarAnimationStudios/USD/archive/v21.02.tar.gz"
+    sha256: "97bbae5d86d6e4db357645db183be03afe28fe024b242f27bd4f62b4e2eade53"
+
+patches:
+  "21.02":
+    patches: "usd-21.02.patch"

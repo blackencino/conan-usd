@@ -1,0 +1,657 @@
+diff -Naur a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2021-03-11 12:02:30.049645500 -0800
++++ b/CMakeLists.txt	2021-03-11 22:48:14.285332800 -0800
+@@ -14,9 +14,10 @@
+ endif()
+ 
+ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+-                      ${CMAKE_SOURCE_DIR}/cmake/defaults
+-                      ${CMAKE_SOURCE_DIR}/cmake/modules
+-                      ${CMAKE_SOURCE_DIR}/cmake/macros)
++                      ${usd_SOURCE_DIR}/cmake/defaults
++                      #${usd_SOURCE_DIR}/cmake/modules
++                      ${usd_SOURCE_DIR}/cmake/macros)
++message(STATUS "module path: ${CMAKE_MODULE_PATH}")
+ 
+ include(Options)
+ include(ProjectDefaults)
+diff -Naur a/cmake/defaults/Packages.cmake b/cmake/defaults/Packages.cmake
+--- a/cmake/defaults/Packages.cmake	2021-03-11 12:02:27.022839900 -0800
++++ b/cmake/defaults/Packages.cmake	2021-03-11 15:11:35.277287900 -0800
+@@ -124,11 +124,12 @@
+     endif()
+  
+     # --Boost
+-    find_package(Boost
+-        COMPONENTS
+-            program_options
+-        REQUIRED
+-    )
++    #find_package(Boost
++    #    COMPONENTS
++    #        program_options
++    #    REQUIRED
++    #)
++    find_package(Boost REQUIRED)
+ endif()
+ 
+ # --TBB
+diff -Naur a/cmake/macros/Private.cmake b/cmake/macros/Private.cmake
+--- a/cmake/macros/Private.cmake	2021-03-11 12:02:26.754360000 -0800
++++ b/cmake/macros/Private.cmake	2021-03-12 01:23:50.128995900 -0800
+@@ -43,9 +43,9 @@
+     set(hpath "${_args_PREFIX}/${LIBRARY_NAME}")
+     if ("${CMAKE_CURRENT_SOURCE_DIR}" MATCHES ".*/pxr/.*")
+         # Include paths under pxr/ match the source path.
+-        file(RELATIVE_PATH hpath "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
++        file(RELATIVE_PATH hpath "${usd_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+     endif()
+-    set(header_dest_dir "${CMAKE_BINARY_DIR}/${PXR_INSTALL_SUBDIR}/include/${hpath}")
++    set(header_dest_dir "${usd_BINARY_DIR}/${PXR_INSTALL_SUBDIR}/include/${hpath}")
+     if( NOT "${_args_FILES}" STREQUAL "")
+         set(files_copied "")
+         foreach (f ${_args_FILES})
+@@ -458,8 +458,8 @@
+ 
+     # Headers live in subdirectories.
+     set(rel_output_header_path "${PXR_PREFIX}/${TARGET_NAME}/${output_header_name}")
+-    set(abs_output_header_path "${CMAKE_BINARY_DIR}/include/${rel_output_header_path}")
+-    set(abs_precompiled_path ${CMAKE_BINARY_DIR}/include/${PXR_PREFIX}/${TARGET_NAME}/${precompiled_name})
++    set(abs_output_header_path "${usd_BINARY_DIR}/include/${rel_output_header_path}")
++    set(abs_precompiled_path ${usd_BINARY_DIR}/include/${PXR_PREFIX}/${TARGET_NAME}/${precompiled_name})
+ 
+     # Additional compile flags to use precompiled header.  This will be
+     set(compile_flags "")
+@@ -990,13 +990,13 @@
+     # Include headers from the build directory.
+     get_filename_component(
+         PRIVATE_INC_DIR
+-        "${CMAKE_BINARY_DIR}/include"
++        "${usd_BINARY_DIR}/include"
+         ABSOLUTE
+     )
+     if (PXR_INSTALL_SUBDIR)
+         get_filename_component(
+             SUBDIR_INC_DIR
+-            "${CMAKE_BINARY_DIR}/${PXR_INSTALL_SUBDIR}/include"
++            "${usd_BINARY_DIR}/${PXR_INSTALL_SUBDIR}/include"
+             ABSOLUTE
+         )
+     endif()
+@@ -1254,6 +1254,7 @@
+         PUBLIC
+             ${pythonEnabled}
+             ${apiPublic}
++            ${_PXR_CXX_DEFINITIONS}
+         PRIVATE
+             MFB_PACKAGE_NAME=${PXR_PACKAGE}
+             MFB_ALT_PACKAGE_NAME=${PXR_PACKAGE}
+@@ -1265,6 +1266,10 @@
+             ${apiPrivate}
+     )
+ 
++    target_compile_options(${NAME}
++        PUBLIC
++        ${_PXR_CXX_FLAGS})
++
+     # Copy headers to the build directory and include from there and from
+     # external packages.
+     _copy_headers(${NAME}
+@@ -1277,8 +1282,8 @@
+ 
+     target_include_directories(${NAME}
+         PRIVATE
+-            "${CMAKE_BINARY_DIR}/include"
+-            "${CMAKE_BINARY_DIR}/${PXR_INSTALL_SUBDIR}/include"
++            "${usd_BINARY_DIR}/include"
++            "${usd_BINARY_DIR}/${PXR_INSTALL_SUBDIR}/include"
+         INTERFACE
+             $<INSTALL_INTERFACE:${headerInstallDir}>
+     )
+@@ -1299,7 +1304,7 @@
+     # Doxygen will be run on these files during the install step ---
+     # see pxr_build_documentation().
+     if(PXR_BUILD_DOCUMENTATION)
+-        set(docBuildDir ${CMAKE_BINARY_DIR}/docs/${headerInstallPrefix})
++        set(docBuildDir ${usd_BINARY_DIR}/docs/${headerInstallPrefix})
+         set(doxygenFiles "${args_PUBLIC_HEADERS};${args_DOXYGEN_FILES}")
+ 
+         set(files_copied "")
+diff -Naur a/cmake/macros/Public.cmake b/cmake/macros/Public.cmake
+--- a/cmake/macros/Public.cmake	2021-03-11 12:02:26.769982600 -0800
++++ b/cmake/macros/Public.cmake	2021-03-11 23:16:47.350376900 -0800
+@@ -24,8 +24,8 @@
+ include(Private)
+ 
+ function(pxr_build_documentation)
+-    configure_file(${CMAKE_SOURCE_DIR}/docs/doxygen/Doxyfile.in
+-                   ${CMAKE_BINARY_DIR}/Doxyfile)
++    configure_file(${usd_SOURCE_DIR}/docs/doxygen/Doxyfile.in
++                   ${usd_BINARY_DIR}/Doxyfile)
+ 
+     add_custom_target(
+         documentation
+@@ -34,28 +34,28 @@
+         # since it's generated outside of the libraries.
+         COMMAND
+             ${CMAKE_COMMAND} -E copy
+-            "${CMAKE_BINARY_DIR}/include/pxr/pxr.h"
+-            "${CMAKE_BINARY_DIR}/docs/include/pxr/pxr.h"
++            "${usd_BINARY_DIR}/include/pxr/pxr.h"
++            "${usd_BINARY_DIR}/docs/include/pxr/pxr.h"
+         COMMAND 
+             ${CMAKE_COMMAND} -E copy_directory
+-            "${CMAKE_SOURCE_DIR}/docs"
+-            "${CMAKE_BINARY_DIR}/docs"
++            "${usd_SOURCE_DIR}/docs"
++            "${usd_BINARY_DIR}/docs"
+     )
+ 
+     # Execute doxygen during the install step. All of the files we want
+     # doxygen to process should already have been copied to the docs
+     # directory during the build step
+-    install(CODE "execute_process(COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/Doxyfile)")
++    install(CODE "execute_process(COMMAND ${DOXYGEN_EXECUTABLE} ${usd_BINARY_DIR}/Doxyfile)")
+ 
+     set(INST_DOCS_ROOT  "${CMAKE_INSTALL_PREFIX}/docs")
+ 
+-    set(BUILT_HTML_DOCS "${CMAKE_BINARY_DIR}/docs/doxy_html")
++    set(BUILT_HTML_DOCS "${usd_BINARY_DIR}/docs/doxy_html")
+     install(
+         DIRECTORY ${BUILT_HTML_DOCS}
+         DESTINATION ${INST_DOCS_ROOT}
+     )
+ 
+-    set(BUILT_XML_DOCS "${CMAKE_BINARY_DIR}/docs/doxy_xml")
++    set(BUILT_XML_DOCS "${usd_BINARY_DIR}/docs/doxy_xml")
+     install(
+         DIRECTORY ${BUILT_XML_DOCS}
+         DESTINATION ${INST_DOCS_ROOT}
+@@ -180,7 +180,7 @@
+     # Install and include headers from the build directory.
+     get_filename_component(
+         PRIVATE_INC_DIR
+-        "${CMAKE_BINARY_DIR}/include"
++        "${usd_BINARY_DIR}/include"
+         ABSOLUTE
+     )
+ 
+@@ -485,7 +485,7 @@
+ 
+         set(testPlugInfoLibDir "tests/${bt_INSTALL_PREFIX}/lib/${LIBRARY_NAME}")
+         set(testPlugInfoResourceDir "${testPlugInfoLibDir}/${TEST_PLUG_INFO_RESOURCE_PATH}")
+-        set(testPlugInfoPath "${CMAKE_BINARY_DIR}/${testPlugInfoResourceDir}/plugInfo.json")
++        set(testPlugInfoPath "${usd_BINARY_DIR}/${testPlugInfoResourceDir}/plugInfo.json")
+ 
+         file(RELATIVE_PATH 
+             TEST_PLUG_INFO_LIBRARY_PATH
+@@ -861,11 +861,11 @@
+ function(pxr_toplevel_prologue)
+     # Generate a namespace declaration header, pxr.h, at the top level of
+     # pxr at configuration time.
+-    configure_file(${CMAKE_SOURCE_DIR}/pxr/pxr.h.in
+-        ${CMAKE_BINARY_DIR}/include/pxr/pxr.h     
++    configure_file(${usd_SOURCE_DIR}/pxr/pxr.h.in
++        ${usd_BINARY_DIR}/include/pxr/pxr.h     
+     )  
+     install(
+-        FILES ${CMAKE_BINARY_DIR}/include/pxr/pxr.h
++        FILES ${usd_BINARY_DIR}/include/pxr/pxr.h
+         DESTINATION include/pxr
+     )
+ 
+@@ -1140,12 +1140,12 @@
+             usd_m
+         COMMAND ${CMAKE_COMMAND} -E copy
+             "${CMAKE_CURRENT_BINARY_DIR}/usd-targets-$<CONFIG>.cmake"
+-            "${CMAKE_BINARY_DIR}/usd-targets-$<CONFIG>.cmake"
++            "${usd_BINARY_DIR}/usd-targets-$<CONFIG>.cmake"
+         COMMAND ${CMAKE_COMMAND} -E copy
+             "${CMAKE_CURRENT_BINARY_DIR}/usd-imports-$<CONFIG>.cmake"
+-            "${CMAKE_BINARY_DIR}/usd-imports-$<CONFIG>.cmake"
+-        COMMAND ${CMAKE_COMMAND} -E echo Export file: ${CMAKE_BINARY_DIR}/usd-targets-$<CONFIG>.cmake
+-        COMMAND ${CMAKE_COMMAND} -E echo Import file: ${CMAKE_BINARY_DIR}/usd-imports-$<CONFIG>.cmake
++            "${usd_BINARY_DIR}/usd-imports-$<CONFIG>.cmake"
++        COMMAND ${CMAKE_COMMAND} -E echo Export file: ${usd_BINARY_DIR}/usd-targets-$<CONFIG>.cmake
++        COMMAND ${CMAKE_COMMAND} -E echo Import file: ${usd_BINARY_DIR}/usd-imports-$<CONFIG>.cmake
+     )
+ endfunction() # pxr_monolithic_epilogue
+ 
+diff -Naur a/pxr/base/plug/CMakeLists.txt b/pxr/base/plug/CMakeLists.txt
+--- a/pxr/base/plug/CMakeLists.txt	2021-03-11 12:02:09.607631500 -0800
++++ b/pxr/base/plug/CMakeLists.txt	2021-03-11 13:54:29.123562900 -0800
+@@ -8,8 +8,8 @@
+         js
+         trace
+         work
+-        ${Boost_PYTHON_LIBRARY}
+-        ${TBB_tbb_LIBRARY}
++        Boost::Boost
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/base/plug/initConfig.cpp b/pxr/base/plug/initConfig.cpp
+--- a/pxr/base/plug/initConfig.cpp	2021-03-11 12:02:09.679635600 -0800
++++ b/pxr/base/plug/initConfig.cpp	2021-03-12 14:00:37.809032100 -0800
+@@ -34,6 +34,8 @@
+ #include "pxr/base/arch/symbols.h"
+ #include "pxr/base/arch/systemInfo.h"
+ 
++#include <iostream>
++
+ PXR_NAMESPACE_OPEN_SCOPE
+ 
+ namespace {
+@@ -120,6 +122,11 @@
+     // a particular plug-in will "win".
+     const bool pathsAreOrdered = true;
+     Plug_SetPaths(result, debugMessages, pathsAreOrdered);
++
++    std::cout << "PLUG INIT CONFIG, MESSAGES: " << std::endl;
++    for (auto const& msg : debugMessages) {
++        std::cout << msg << std::endl;
++    }
+ }
+ 
+ }
+diff -Naur a/pxr/base/tf/CMakeLists.txt b/pxr/base/tf/CMakeLists.txt
+--- a/pxr/base/tf/CMakeLists.txt	2021-03-11 12:02:10.257631000 -0800
++++ b/pxr/base/tf/CMakeLists.txt	2021-03-11 13:54:29.182832400 -0800
+@@ -13,8 +13,8 @@
+         arch
+         ${WINLIBS}
+         ${PYTHON_LIBRARIES}
+-        ${Boost_PYTHON_LIBRARY}
+-        ${TBB_tbb_LIBRARY}
++        Boost::Boost
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${PYTHON_INCLUDE_DIR}
+@@ -242,7 +242,7 @@
+     pxr_build_test(testTfPyFunction
+         LIBRARIES
+             tf
+-            ${Boost_PYTHON_LIBRARY}
++            Boost::Boost
+         CPPFILES
+             testenv/testTfPyFunction.cpp
+     ) 
+@@ -257,7 +257,7 @@
+     pxr_build_test(testTfPyLock
+         LIBRARIES
+             tf
+-            ${Boost_PYTHON_LIBRARY}
++            Boost::Boost
+         CPPFILES
+             testenv/testTfPyLock.cpp
+     )
+@@ -265,7 +265,7 @@
+     pxr_build_test(testTfPyResultConversions
+         LIBRARIES
+             tf
+-            ${Boost_PYTHON_LIBRARY}
++            Boost::Boost
+         CPPFILES
+             testenv/testTfPyResultConversions.cpp
+     )
+diff -Naur a/pxr/base/trace/CMakeLists.txt b/pxr/base/trace/CMakeLists.txt
+--- a/pxr/base/trace/CMakeLists.txt	2021-03-11 12:02:14.663631500 -0800
++++ b/pxr/base/trace/CMakeLists.txt	2021-03-11 13:54:29.214960200 -0800
+@@ -6,8 +6,8 @@
+         arch
+         js
+         tf
+-        ${Boost_PYTHON_LIBRARY}
+-        ${TBB_tbb_LIBRARY}
++        Boost::Boost
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/base/vt/CMakeLists.txt b/pxr/base/vt/CMakeLists.txt
+--- a/pxr/base/vt/CMakeLists.txt	2021-03-11 12:02:15.575630900 -0800
++++ b/pxr/base/vt/CMakeLists.txt	2021-03-11 13:54:29.245059600 -0800
+@@ -7,8 +7,8 @@
+         tf
+         gf
+         trace
+-        ${Boost_PYTHON_LIBRARY}
+-        ${TBB_tbb_LIBRARY}
++        Boost::Boost
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/base/work/CMakeLists.txt b/pxr/base/work/CMakeLists.txt
+--- a/pxr/base/work/CMakeLists.txt	2021-03-11 12:02:16.070634000 -0800
++++ b/pxr/base/work/CMakeLists.txt	2021-03-11 13:54:29.298035100 -0800
+@@ -5,7 +5,7 @@
+     LIBRARIES
+         tf
+         trace
+-        ${TBB_tbb_LIBRARY}
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${TBB_INCLUDE_DIRS}
+diff -Naur a/pxr/imaging/glf/CMakeLists.txt b/pxr/imaging/glf/CMakeLists.txt
+--- a/pxr/imaging/glf/CMakeLists.txt	2021-03-11 12:02:24.231631900 -0800
++++ b/pxr/imaging/glf/CMakeLists.txt	2021-03-11 13:53:35.297725100 -0800
+@@ -34,7 +34,7 @@
+         tf
+         trace
+         sdf
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+         ${OPENGL_gl_LIBRARY}
+         ${X11_LIBRARIES}
+         ${optionalLibs}
+diff -Naur a/pxr/imaging/hd/CMakeLists.txt b/pxr/imaging/hd/CMakeLists.txt
+--- a/pxr/imaging/hd/CMakeLists.txt	2021-03-11 12:02:25.183633200 -0800
++++ b/pxr/imaging/hd/CMakeLists.txt	2021-03-11 13:54:29.345606200 -0800
+@@ -14,7 +14,7 @@
+         cameraUtil
+         hf
+         pxOsd
+-        ${TBB_tbb_LIBRARY}
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${TBB_INCLUDE_DIRS}
+diff -Naur a/pxr/imaging/plugin/hdEmbree/CMakeLists.txt b/pxr/imaging/plugin/hdEmbree/CMakeLists.txt
+--- a/pxr/imaging/plugin/hdEmbree/CMakeLists.txt	2021-03-11 12:02:23.159632100 -0800
++++ b/pxr/imaging/plugin/hdEmbree/CMakeLists.txt	2021-03-11 13:54:29.387116600 -0800
+@@ -21,7 +21,7 @@
+         hf
+         hd
+         hdx
+-        ${TBB_tbb_LIBRARY}
++        TBB::TBB
+         ${EMBREE_LIBRARY}
+ 
+     INCLUDE_DIRS
+diff -Naur a/pxr/imaging/plugin/hdStorm/CMakeLists.txt b/pxr/imaging/plugin/hdStorm/CMakeLists.txt
+--- a/pxr/imaging/plugin/hdStorm/CMakeLists.txt	2021-03-11 12:02:23.512632900 -0800
++++ b/pxr/imaging/plugin/hdStorm/CMakeLists.txt	2021-03-11 13:54:29.432270100 -0800
+@@ -26,7 +26,7 @@
+         hd
+         hdSt
+         ${OPENSUBDIV_LIBRARIES}
+-        ${TBB_tbb_LIBRARY}
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${TBB_INCLUDE_DIRS}
+diff -Naur a/pxr/imaging/pxOsd/CMakeLists.txt b/pxr/imaging/pxOsd/CMakeLists.txt
+--- a/pxr/imaging/pxOsd/CMakeLists.txt	2021-03-11 12:02:23.633632200 -0800
++++ b/pxr/imaging/pxOsd/CMakeLists.txt	2021-03-11 13:53:35.339539700 -0800
+@@ -7,7 +7,7 @@
+         gf
+         vt
+         ${OPENSUBDIV_LIBRARIES}
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+ 
+     INCLUDE_DIRS
+         ${OPENSUBDIV_INCLUDE_DIR}
+diff -Naur a/pxr/pxr.h.in b/pxr/pxr.h.in
+--- a/pxr/pxr.h.in	2021-03-11 12:01:13.486900500 -0800
++++ b/pxr/pxr.h.in	2021-03-12 01:26:15.216368300 -0800
+@@ -26,6 +26,9 @@
+ 
+ /// \file pxr/pxr.h
+ 
++// CJH HACK
++#define NOMINMAX
++
+ #define PXR_MAJOR_VERSION @PXR_MAJOR_VERSION@
+ #define PXR_MINOR_VERSION @PXR_MINOR_VERSION@
+ #define PXR_PATCH_VERSION @PXR_PATCH_VERSION@
+diff -Naur a/pxr/usd/ar/CMakeLists.txt b/pxr/usd/ar/CMakeLists.txt
+--- a/pxr/usd/ar/CMakeLists.txt	2021-03-11 12:01:13.513254200 -0800
++++ b/pxr/usd/ar/CMakeLists.txt	2021-03-11 23:24:36.845710400 -0800
+@@ -9,9 +9,9 @@
+ 
+ configure_file(
+     ar.h.in 
+-    ${CMAKE_BINARY_DIR}/include/pxr/usd/ar/ar.h)
++    ${usd_BINARY_DIR}/include/pxr/usd/ar/ar.h)
+ install(
+-    FILES ${CMAKE_BINARY_DIR}/include/pxr/usd/ar/ar.h
++    FILES ${usd_BINARY_DIR}/include/pxr/usd/ar/ar.h
+     DESTINATION include/pxr/usd/ar
+ )
+ 
+@@ -81,7 +81,7 @@
+         tf
+         plug
+         vt
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usd/ndr/CMakeLists.txt b/pxr/usd/ndr/CMakeLists.txt
+--- a/pxr/usd/ndr/CMakeLists.txt	2021-03-11 12:01:17.030912000 -0800
++++ b/pxr/usd/ndr/CMakeLists.txt	2021-03-11 13:53:35.415769400 -0800
+@@ -9,7 +9,7 @@
+         work
+         ar
+         sdf
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usd/pcp/CMakeLists.txt b/pxr/usd/pcp/CMakeLists.txt
+--- a/pxr/usd/pcp/CMakeLists.txt	2021-03-11 12:01:17.503642100 -0800
++++ b/pxr/usd/pcp/CMakeLists.txt	2021-03-11 13:54:29.479153500 -0800
+@@ -9,8 +9,8 @@
+         sdf
+         work
+         ar
+-        ${Boost_PYTHON_LIBRARY}
+-        ${TBB_tbb_LIBRARY}
++        Boost::Boost
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usd/plugin/usdAbc/CMakeLists.txt b/pxr/usd/plugin/usdAbc/CMakeLists.txt
+--- a/pxr/usd/plugin/usdAbc/CMakeLists.txt	2021-03-11 12:01:24.885737000 -0800
++++ b/pxr/usd/plugin/usdAbc/CMakeLists.txt	2021-03-11 16:28:16.093976700 -0800
+@@ -11,7 +11,8 @@
+ 
+ if (PXR_ENABLE_HDF5_SUPPORT)
+    add_definitions(-DPXR_HDF5_SUPPORT_ENABLED)
+-   list(APPEND optionalLibs ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
++   #list(APPEND optionalLibs ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
++   list(APPEND optionalLibs HDF5::HDF5)
+    list(APPEND optionalIncludeDirs ${HDF5_INCLUDE_DIRS})
+ endif()
+ 
+@@ -22,11 +23,12 @@
+         sdf
+         usd
+         usdGeom
+-        ${ALEMBIC_LIBRARIES}
+-        ${OPENEXR_Half_LIBRARY} 
+-        ${OPENEXR_Imath_LIBRARY} 
+-        ${OPENEXR_Iex_LIBRARY} 
+-        ${OPENEXR_IexMath_LIBRARY}
++        Alembic::Alembic
++        #${ALEMBIC_LIBRARIES}
++        #${OPENEXR_Half_LIBRARY} 
++        #${OPENEXR_Imath_LIBRARY} 
++        #${OPENEXR_Iex_LIBRARY} 
++        #${OPENEXR_IexMath_LIBRARY}
+         ${optionalLibs}
+ 
+     INCLUDE_DIRS
+diff -Naur a/pxr/usd/plugin/usdDraco/CMakeLists.txt b/pxr/usd/plugin/usdDraco/CMakeLists.txt
+--- a/pxr/usd/plugin/usdDraco/CMakeLists.txt	2021-03-11 12:01:25.600145400 -0800
++++ b/pxr/usd/plugin/usdDraco/CMakeLists.txt	2021-03-11 23:05:03.213645600 -0800
+@@ -13,7 +13,7 @@
+         sdf
+         usd
+         usdGeom
+-        ${DRACO_LIBRARY}
++        draco::draco
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usd/sdf/CMakeLists.txt b/pxr/usd/sdf/CMakeLists.txt
+--- a/pxr/usd/sdf/CMakeLists.txt	2021-03-11 12:01:26.245167900 -0800
++++ b/pxr/usd/sdf/CMakeLists.txt	2021-03-11 13:53:35.517009600 -0800
+@@ -10,7 +10,7 @@
+         vt
+         work
+         ar
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usd/sdr/CMakeLists.txt b/pxr/usd/sdr/CMakeLists.txt
+--- a/pxr/usd/sdr/CMakeLists.txt	2021-03-11 12:01:32.328094600 -0800
++++ b/pxr/usd/sdr/CMakeLists.txt	2021-03-11 13:53:35.560013700 -0800
+@@ -8,7 +8,7 @@
+         ar
+         ndr
+         sdf
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usd/usd/CMakeLists.txt b/pxr/usd/usd/CMakeLists.txt
+--- a/pxr/usd/usd/CMakeLists.txt	2021-03-11 12:01:32.643535200 -0800
++++ b/pxr/usd/usd/CMakeLists.txt	2021-03-11 13:54:29.523618100 -0800
+@@ -13,8 +13,8 @@
+         trace
+         vt
+         work
+-        ${Boost_PYTHON_LIBRARY}
+-        ${TBB_tbb_LIBRARY}
++        Boost::Boost
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usd/usdGeom/CMakeLists.txt b/pxr/usd/usdGeom/CMakeLists.txt
+--- a/pxr/usd/usdGeom/CMakeLists.txt	2021-03-11 12:01:42.728703300 -0800
++++ b/pxr/usd/usdGeom/CMakeLists.txt	2021-03-11 13:54:29.564518600 -0800
+@@ -11,8 +11,8 @@
+         trace
+         usd
+         work
+-        ${Boost_PYTHON_LIBRARY}
+-        ${TBB_tbb_LIBRARY}
++        Boost::Boost
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usd/usdRi/CMakeLists.txt b/pxr/usd/usdRi/CMakeLists.txt
+--- a/pxr/usd/usdRi/CMakeLists.txt	2021-03-11 12:01:47.678739600 -0800
++++ b/pxr/usd/usdRi/CMakeLists.txt	2021-03-11 13:53:35.696046600 -0800
+@@ -10,7 +10,7 @@
+         usdShade
+         usdGeom
+         usdLux
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usd/usdSkel/CMakeLists.txt b/pxr/usd/usdSkel/CMakeLists.txt
+--- a/pxr/usd/usdSkel/CMakeLists.txt	2021-03-11 12:01:52.542327600 -0800
++++ b/pxr/usd/usdSkel/CMakeLists.txt	2021-03-11 13:54:29.605041200 -0800
+@@ -12,8 +12,8 @@
+         sdf
+         usd
+         usdGeom
+-        ${Boost_PYTHON_LIBRARY}
+-        ${TBB_tbb_LIBRARY}
++        Boost::Boost
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usd/usdUtils/CMakeLists.txt b/pxr/usd/usdUtils/CMakeLists.txt
+--- a/pxr/usd/usdUtils/CMakeLists.txt	2021-03-11 12:01:54.492328500 -0800
++++ b/pxr/usd/usdUtils/CMakeLists.txt	2021-03-11 13:53:35.782047400 -0800
+@@ -9,7 +9,7 @@
+         sdf
+         usd
+         usdGeom
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usdImaging/usdAppUtils/CMakeLists.txt b/pxr/usdImaging/usdAppUtils/CMakeLists.txt
+--- a/pxr/usdImaging/usdAppUtils/CMakeLists.txt	2021-03-11 12:02:02.793539100 -0800
++++ b/pxr/usdImaging/usdAppUtils/CMakeLists.txt	2021-03-11 13:53:35.817042700 -0800
+@@ -17,7 +17,7 @@
+         usd
+         usdGeom
+         usdImagingGL
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
+diff -Naur a/pxr/usdImaging/usdImaging/CMakeLists.txt b/pxr/usdImaging/usdImaging/CMakeLists.txt
+--- a/pxr/usdImaging/usdImaging/CMakeLists.txt	2021-03-11 12:02:03.183538700 -0800
++++ b/pxr/usdImaging/usdImaging/CMakeLists.txt	2021-03-11 13:54:29.653642800 -0800
+@@ -18,7 +18,7 @@
+         usdShade
+         usdVol
+         ar
+-        ${TBB_tbb_LIBRARY}
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${TBB_INCLUDE_DIRS}
+diff -Naur a/pxr/usdImaging/usdImagingGL/CMakeLists.txt b/pxr/usdImaging/usdImagingGL/CMakeLists.txt
+--- a/pxr/usdImaging/usdImagingGL/CMakeLists.txt	2021-03-11 12:02:04.140539200 -0800
++++ b/pxr/usdImaging/usdImagingGL/CMakeLists.txt	2021-03-11 13:54:29.702767200 -0800
+@@ -30,9 +30,9 @@
+         usdShade
+         usdImaging
+         ar
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+         ${PYTHON_LIBRARIES}
+-        ${TBB_tbb_LIBRARY}
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${PYTHON_INCLUDE_PATH}
+diff -Naur a/pxr/usdImaging/usdRiImaging/CMakeLists.txt b/pxr/usdImaging/usdRiImaging/CMakeLists.txt
+--- a/pxr/usdImaging/usdRiImaging/CMakeLists.txt	2021-03-11 12:02:04.476538600 -0800
++++ b/pxr/usdImaging/usdRiImaging/CMakeLists.txt	2021-03-11 13:54:29.736766900 -0800
+@@ -19,7 +19,7 @@
+         usdImaging
+         usdVol
+         ar
+-        ${TBB_tbb_LIBRARY}
++        TBB::TBB
+ 
+     INCLUDE_DIRS
+         ${TBB_INCLUDE_DIRS}
+diff -Naur a/pxr/usdImaging/usdviewq/CMakeLists.txt b/pxr/usdImaging/usdviewq/CMakeLists.txt
+--- a/pxr/usdImaging/usdviewq/CMakeLists.txt	2021-03-11 12:02:04.916538900 -0800
++++ b/pxr/usdImaging/usdviewq/CMakeLists.txt	2021-03-11 13:53:35.897047100 -0800
+@@ -10,7 +10,7 @@
+         tf
+         usd
+         usdGeom
+-        ${Boost_PYTHON_LIBRARY}
++        Boost::Boost
+ 
+     INCLUDE_DIRS
+         ${Boost_INCLUDE_DIRS}
