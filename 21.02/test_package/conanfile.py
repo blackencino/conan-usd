@@ -4,7 +4,12 @@ from conans import ConanFile, CMake, tools
 
 class USDTestConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake", "cmake_paths", "cmake_find_package"
+    #generators = "cmake", "cmake_paths", "cmake_find_package", "virtualenv", \
+    #    "virtualbuildenv", "virtualrunenv"
+    generators = "cmake_find_package", \
+        "virtualenv", \
+        "virtualbuildenv", \
+        "virtualrunenv"
 
     def build(self):
         cmake = CMake(self, generator='Ninja')
