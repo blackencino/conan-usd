@@ -3,6 +3,7 @@
 #include "pxr/usd/usd/primRange.h"
 #include "pxr/usd/usd/stage.h"
 #include "pxr/usd/usdGeom/mesh.h"
+#include "pxr/usd/usdGeom/points.h"
 
 #include <iostream>
 #include <string>
@@ -45,6 +46,13 @@ int main(int argc, char *argv[]) {
                     << std::endl;
         }
 
+      } else if (prim.IsA<pxr::UsdGeomPoints>()) {
+        std::cout << "\t... which is a geom points!" << std::endl;
+        pxr::UsdGeomPoints const points{prim};
+        for (auto const &attr : prim.GetAuthoredAttributes()) {
+          std::cout << "\t... authored attr: " << attr.GetTypeName() << ", "
+                    << attr.GetBaseName() << std::endl;
+        }
       } else {
         std::cout << "\t... which is NOT a mesh!" << std::endl;
       }

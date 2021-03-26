@@ -46,8 +46,6 @@ class USDConan(ConanFile):
         return "build_subfolder"
 
     def config_options(self):
-        #if self.settings.os == "Windows":
-        #    del self.options.fPIC
         pass
 
     def configure(self):
@@ -60,8 +58,8 @@ class USDConan(ConanFile):
         self.options["tbb"].shared = True
 
     def source(self):
-        #tools.get(**self.conan_data["sources"][self.version])
-        tools.untargz("C:\\Users\\TM-Z8\\Downloads\\USD-21.02.tar.gz")
+        tools.get(**self.conan_data["sources"][self.version])
+        #tools.untargz("C:\\Users\\TM-Z8\\Downloads\\USD-21.02.tar.gz")
         tools.patch(patch_file="patches/USD-21.02.patch",
                     base_path="USD-{}".format(self.version))
         os.rename("USD-{}".format(self.version), self._source_subfolder)
@@ -135,8 +133,8 @@ class USDConan(ConanFile):
             self.cpp_info.system_libs.append("Shlwapi.lib")
             self.cpp_info.system_libs.append("Dbghelp.lib") 
             self.cpp_info.system_libs.append("Ws2_32.lib")
-        #if not self.options.shared:
-        #    self.cpp_info.defines.append("PXR_STATIC")
+        if not self.options.shared:
+            self.cpp_info.defines.append("PXR_STATIC")
 
         self.env_info.PATH.append(os.path.join(self.package_folder, "bin"))
         self.env_info.PATH.append(os.path.join(self.package_folder, "lib"))
