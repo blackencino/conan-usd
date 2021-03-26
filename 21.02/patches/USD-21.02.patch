@@ -38,7 +38,7 @@ diff -Naur a/cmake/defaults/Packages.cmake b/cmake/defaults/Packages.cmake
  # --TBB
 diff -Naur a/cmake/macros/Private.cmake b/cmake/macros/Private.cmake
 --- a/cmake/macros/Private.cmake	2021-03-11 12:02:26.754360000 -0800
-+++ b/cmake/macros/Private.cmake	2021-03-12 01:23:50.128995900 -0800
++++ b/cmake/macros/Private.cmake	2021-03-26 11:41:56.371033000 -0700
 @@ -43,9 +43,9 @@
      set(hpath "${_args_PREFIX}/${LIBRARY_NAME}")
      if ("${CMAKE_CURRENT_SOURCE_DIR}" MATCHES ".*/pxr/.*")
@@ -90,9 +90,9 @@ diff -Naur a/cmake/macros/Private.cmake b/cmake/macros/Private.cmake
              ${apiPrivate}
      )
  
-+    target_compile_options(${NAME}
-+        PUBLIC
-+        ${_PXR_CXX_FLAGS})
++    #target_compile_options(${NAME}
++    #    PUBLIC
++    #    ${_PXR_CXX_FLAGS})
 +
      # Copy headers to the build directory and include from there and from
      # external packages.
