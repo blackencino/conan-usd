@@ -22,14 +22,14 @@ class USDConan(ConanFile):
         "*:fPIC": True
         }
     generators = "cmake", "cmake_find_package", "cmake_paths", "virtualenv", \
-        "virtualbuildenv", "virtualrunenv"
+        "virtualrunenv"
     exports_sources = ["CMakeLists.txt", "patches/*"]
 
     requires = (
         "boost/1.74.0",
         "openexr/2.5.3",
-        "alembic/1.7.16@blackencino/latest",
-        "draco/1.3.6",
+        #"alembic/1.7.16@blackencino/latest",
+        #"draco/1.3.6",
         "tbb/2020.0",
         "hdf5/1.12.0",
         "zlib/1.2.11"
@@ -82,8 +82,8 @@ class USDConan(ConanFile):
         self._cmake.definitions["PXR_BUILD_OPENCOLORIO_PLUGIN"] = False
         self._cmake.definitions["PXR_BUILD_USD_IMAGING"] = False
         self._cmake.definitions["PXR_BUILD_USDVIEW"] = False
-        self._cmake.definitions["PXR_BUILD_ALEMBIC_PLUGIN"] = True
-        self._cmake.definitions["PXR_BUILD_DRACO_PLUGIN"] = True
+        self._cmake.definitions["PXR_BUILD_ALEMBIC_PLUGIN"] = False
+        self._cmake.definitions["PXR_BUILD_DRACO_PLUGIN"] = False
         self._cmake.definitions["PXR_BUILD_PRMAN_PLUGIN"] = False
         self._cmake.definitions["PXR_BUILD_MATERIALX_PLUGIN"] = False
         self._cmake.definitions["PXR_ENABLE_MATERIALX_IMAGING_SUPPORT"] = False
