@@ -24,6 +24,7 @@ class USDConan(ConanFile):
     generators = "cmake", "cmake_find_package", "cmake_paths", "virtualenv", \
         "virtualrunenv"
     exports_sources = ["CMakeLists.txt", "patches/*"]
+    short_paths = True
 
     requires = (
         "boost/1.74.0",
