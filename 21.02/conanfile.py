@@ -1,4 +1,5 @@
 from conans import ConanFile, CMake, tools
+from conans.errors import ConanInvalidConfiguration
 import os
 
 class USDConan(ConanFile):
@@ -17,16 +18,19 @@ class USDConan(ConanFile):
         "shared": [True, False]
         }
     default_options = {
-        "shared": False
+        "shared": True,
+        "*:fPIC": True
         }
-    generators = "cmake", "cmake_find_package"
+    generators = "cmake", "cmake_find_package", "cmake_paths", "virtualenv", \
+        "virtualrunenv"
     exports_sources = ["CMakeLists.txt", "patches/*"]
+    short_paths = True
 
     requires = (
         "boost/1.74.0",
         "openexr/2.5.3",
-        "alembic/1.7.16@blackencino/latest",
-        "draco/1.3.6",
+        #"alembic/1.7.16@blackencino/latest",
+        #"draco/1.3.6",
         "tbb/2020.0",
         "hdf5/1.12.0",
         "zlib/1.2.11"
@@ -46,16 +50,17 @@ class USDConan(ConanFile):
         pass
 
     def configure(self):
-        pass
+        if not self.options.shared:
+            raise ConanInvalidConfiguration("USD only supports shared=True at this time")
 
     def requirements(self):
-        self.options["tbb"].tbbmalloc = True
+        self.options["tbb"].tbbmalloc = False
         self.options["tbb"].tbbproxy = False
-        self.options["tbb"].shared = False
+        self.options["tbb"].shared = True
 
     def source(self):
-        #tools.get(**self.conan_data["sources"][self.version])
-        tools.untargz("C:\\Users\\TM-Z8\\Downloads\\USD-21.02.tar.gz")
+        tools.get(**self.conan_data["sources"][self.version])
+        #tools.untargz("C:\\Users\\TM-Z8\\Downloads\\USD-21.02.tar.gz")
         tools.patch(patch_file="patches/USD-21.02.patch",
                     base_path="USD-{}".format(self.version))
         os.rename("USD-{}".format(self.version), self._source_subfolder)
@@ -97,8 +102,8 @@ class USDConan(ConanFile):
         self._cmake.definitions["PXR_ENABLE_VULKAN_SUPPORT"] = False
         self._cmake.definitions["PXR_ENABLE_GL_SUPPORT"] = False
         self._cmake.definitions["PXR_ENABLE_PRECOMPILED_HEADERS"] = True
-        self._cmake.definitions["BUILD_SHARED_LIBS"] = False
-        self._cmake.definitions["PXR_BUILD_MONOLITHIC"] = True
+        self._cmake.definitions["BUILD_SHARED_LIBS"] = True
+        self._cmake.definitions["PXR_BUILD_MONOLITHIC"] = False
 
         self._cmake.configure(build_folder=self._build_subfolder)
         return self._cmake
@@ -115,6 +120,10 @@ class USDConan(ConanFile):
         tools.rmdir(os.path.join(self.package_folder, "lib", "pkgconfig"))
         tools.rmdir(os.path.join(self.package_folder, "lib", "cmake"))
 
+        self.copy(pattern="*.dll", dst="bin", keep_path=False)
+        self.copy(pattern="*.dylib", dst="lib", keep_path=False)
+        self.copy(pattern="*.so*", dst="lib", keep_path=False)
+
     def package_info(self):
         self.cpp_info.names["cmake_find_package"] = "usd"
         self.cpp_info.names["cmake_find_package_multi"] = "usd"
@@ -122,13 +131,16 @@ class USDConan(ConanFile):
 
         self.cpp_info.libs = tools.collect_libs(self)
         if self.settings.os == "Windows":
-            self.cpp_info.libs.append("Shlwapi.lib")
-            self.cpp_info.libs.append("Dbghelp.lib") 
-            self.cpp_info.libs.append("Ws2_32.lib")
-        self.cpp_info.defines.append("PXR_STATIC")
-        #self.cpp_info.includedirs = ["lib"]
-        #if self.options.shared:
-        #    self.cpp_info.defines.append("ALEMBIC_DLL")
+            self.cpp_info.system_libs.append("Shlwapi.lib")
+            self.cpp_info.system_libs.append("Dbghelp.lib") 
+            self.cpp_info.system_libs.append("Ws2_32.lib")
+        if not self.options.shared:
+            self.cpp_info.defines.append("PXR_STATIC")
+
+        self.env_info.PATH.append(os.path.join(self.package_folder, "bin"))
+        self.env_info.PATH.append(os.path.join(self.package_folder, "lib"))
+        self.env_info.PXR_PLUGINPATH_NAME = os.path.join(self.package_folder, "lib", "usd")
+
 
 
 

@@ -4,7 +4,9 @@ from conans import ConanFile, CMake, tools
 
 class USDTestConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake", "cmake_paths", "cmake_find_package"
+    generators = "cmake_find_package", \
+        "virtualenv", \
+        "virtualrunenv"
 
     def build(self):
         cmake = CMake(self, generator='Ninja')
@@ -15,6 +17,6 @@ class USDTestConan(ConanFile):
 
     def test(self):
         if not tools.cross_building(self):
-            bin_path = os.path.join("example")
+            bin_path = os.path.join(".", "example")
             usdfile = os.path.join(self.source_folder, "..", "..", "example_data", "example.usd")
             self.run("{} {}".format(bin_path, usdfile), run_environment=True)

@@ -38,7 +38,7 @@ diff -Naur a/cmake/defaults/Packages.cmake b/cmake/defaults/Packages.cmake
  # --TBB
 diff -Naur a/cmake/macros/Private.cmake b/cmake/macros/Private.cmake
 --- a/cmake/macros/Private.cmake	2021-03-11 12:02:26.754360000 -0800
-+++ b/cmake/macros/Private.cmake	2021-03-12 01:23:50.128995900 -0800
++++ b/cmake/macros/Private.cmake	2021-03-26 11:41:56.371033000 -0700
 @@ -43,9 +43,9 @@
      set(hpath "${_args_PREFIX}/${LIBRARY_NAME}")
      if ("${CMAKE_CURRENT_SOURCE_DIR}" MATCHES ".*/pxr/.*")
@@ -90,9 +90,9 @@ diff -Naur a/cmake/macros/Private.cmake b/cmake/macros/Private.cmake
              ${apiPrivate}
      )
  
-+    target_compile_options(${NAME}
-+        PUBLIC
-+        ${_PXR_CXX_FLAGS})
++    #target_compile_options(${NAME}
++    #    PUBLIC
++    #    ${_PXR_CXX_FLAGS})
 +
      # Copy headers to the build directory and include from there and from
      # external packages.
@@ -231,30 +231,6 @@ diff -Naur a/pxr/base/plug/CMakeLists.txt b/pxr/base/plug/CMakeLists.txt
  
      INCLUDE_DIRS
          ${Boost_INCLUDE_DIRS}
-diff -Naur a/pxr/base/plug/initConfig.cpp b/pxr/base/plug/initConfig.cpp
---- a/pxr/base/plug/initConfig.cpp	2021-03-11 12:02:09.679635600 -0800
-+++ b/pxr/base/plug/initConfig.cpp	2021-03-12 14:00:37.809032100 -0800
-@@ -34,6 +34,8 @@
- #include "pxr/base/arch/symbols.h"
- #include "pxr/base/arch/systemInfo.h"
- 
-+#include <iostream>
-+
- PXR_NAMESPACE_OPEN_SCOPE
- 
- namespace {
-@@ -120,6 +122,11 @@
-     // a particular plug-in will "win".
-     const bool pathsAreOrdered = true;
-     Plug_SetPaths(result, debugMessages, pathsAreOrdered);
-+
-+    std::cout << "PLUG INIT CONFIG, MESSAGES: " << std::endl;
-+    for (auto const& msg : debugMessages) {
-+        std::cout << msg << std::endl;
-+    }
- }
- 
- }
 diff -Naur a/pxr/base/tf/CMakeLists.txt b/pxr/base/tf/CMakeLists.txt
 --- a/pxr/base/tf/CMakeLists.txt	2021-03-11 12:02:10.257631000 -0800
 +++ b/pxr/base/tf/CMakeLists.txt	2021-03-11 13:54:29.182832400 -0800
@@ -492,13 +468,13 @@ diff -Naur a/pxr/usd/plugin/usdAbc/CMakeLists.txt b/pxr/usd/plugin/usdAbc/CMakeL
      INCLUDE_DIRS
 diff -Naur a/pxr/usd/plugin/usdDraco/CMakeLists.txt b/pxr/usd/plugin/usdDraco/CMakeLists.txt
 --- a/pxr/usd/plugin/usdDraco/CMakeLists.txt	2021-03-11 12:01:25.600145400 -0800
-+++ b/pxr/usd/plugin/usdDraco/CMakeLists.txt	2021-03-11 23:05:03.213645600 -0800
++++ b/pxr/usd/plugin/usdDraco/CMakeLists.txt	2021-03-15 14:48:59.235536500 -0700
 @@ -13,7 +13,7 @@
          sdf
          usd
          usdGeom
 -        ${DRACO_LIBRARY}
-+        draco::draco
++        Draco::Draco
  
      INCLUDE_DIRS
          ${Boost_INCLUDE_DIRS}
