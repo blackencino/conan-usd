@@ -63,6 +63,8 @@ class USDConan(ConanFile):
         #tools.untargz("C:\\Users\\TM-Z8\\Downloads\\USD-21.02.tar.gz")
         tools.patch(patch_file="patches/USD-21.02.patch",
                     base_path="USD-{}".format(self.version))
+        tools.patch(patch_file="patches/USD-21.02-tf-token-algorithm.patch",
+                    base_path="USD-{}".format(self.version))
         os.rename("USD-{}".format(self.version), self._source_subfolder)
 
     def _configure_cmake(self):

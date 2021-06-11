@@ -1,0 +1,11 @@
+diff -Naur a/pxr/base/tf/token.cpp b/pxr/base/tf/token.cpp
+--- USD-21.02_compare/pxr/base/tf/token.cpp	2021-06-11 01:29:31.942639200 -0700
++++ USD-21.02/pxr/base/tf/token.cpp	2021-06-11 01:30:32.327174400 -0700
+@@ -39,6 +39,7 @@
+ 
+ #include <tbb/spin_mutex.h>
+ 
++#include <algorithm>
+ #include <string>
+ #include <ostream>
+ #include <vector>
