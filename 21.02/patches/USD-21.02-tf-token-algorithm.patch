@@ -1,0 +1,45 @@
+diff -Naur a/pxr/base/tf/token.cpp b/pxr/base/tf/token.cpp
+--- a/pxr/base/tf/token.cpp	2021-06-11 01:29:31.942639200 -0700
++++ b/pxr/base/tf/token.cpp	2021-06-11 01:30:32.327174400 -0700
+@@ -39,6 +39,7 @@
+ 
+ #include <tbb/spin_mutex.h>
+ 
++#include <algorithm>
+ #include <string>
+ #include <ostream>
+ #include <vector>
+diff -Naur a/pxr/base/trace/eventTreeBuilder.cpp b/pxr/base/trace/eventTreeBuilder.cpp
+--- a/pxr/base/trace/eventTreeBuilder.cpp	2021-06-11 01:29:30.948038800 -0700
++++ b/pxr/base/trace/eventTreeBuilder.cpp	2021-06-11 01:37:48.887415500 -0700
+@@ -28,6 +28,8 @@
+ 
+ #include "pxr/base/trace/trace.h"
+ 
++#include <algorithm>
++
+ PXR_NAMESPACE_OPEN_SCOPE
+ 
+ Trace_EventTreeBuilder::Trace_EventTreeBuilder() 
+diff -Naur a/pxr/usd/sdr/shaderMetadataHelpers.cpp b/pxr/usd/sdr/shaderMetadataHelpers.cpp
+--- a/pxr/usd/sdr/shaderMetadataHelpers.cpp	2021-06-11 01:29:23.607791000 -0700
++++ b/pxr/usd/sdr/shaderMetadataHelpers.cpp	2021-06-11 01:46:26.988923000 -0700
+@@ -27,6 +27,7 @@
+ #include "pxr/usd/sdr/shaderMetadataHelpers.h"
+ #include "pxr/usd/sdr/shaderProperty.h"
+ 
++#include <algorithm>
+ #include <iostream>
+ 
+ PXR_NAMESPACE_OPEN_SCOPE
+diff -Naur a/pxr/usd/sdr/shaderNode.cpp b/pxr/usd/sdr/shaderNode.cpp
+--- a/pxr/usd/sdr/shaderNode.cpp	2021-06-11 01:29:23.607791000 -0700
++++ b/pxr/usd/sdr/shaderNode.cpp	2021-06-11 01:47:00.087325300 -0700
+@@ -28,6 +28,7 @@
+ #include "pxr/usd/sdr/shaderNode.h"
+ #include "pxr/usd/sdr/shaderProperty.h"
+ 
++#include <algorithm>
+ #include <unordered_set>
+ 
+ PXR_NAMESPACE_OPEN_SCOPE

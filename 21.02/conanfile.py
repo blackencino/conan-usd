@@ -63,6 +63,8 @@ class USDConan(ConanFile):
         #tools.untargz("C:\\Users\\TM-Z8\\Downloads\\USD-21.02.tar.gz")
         tools.patch(patch_file="patches/USD-21.02.patch",
                     base_path="USD-{}".format(self.version))
+        tools.patch(patch_file="patches/USD-21.02-tf-token-algorithm.patch",
+                    base_path="USD-{}".format(self.version))
         os.rename("USD-{}".format(self.version), self._source_subfolder)
 
     def _configure_cmake(self):
@@ -70,6 +72,7 @@ class USDConan(ConanFile):
             return self._cmake
         self._cmake = CMake(self)
 
+        self._cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = True
         self._cmake.definitions["PXR_STRICT_BUILD_MODE"] = False
         self._cmake.definitions["PXR_VALIDATE_GENERATED_CODE"] = False
         self._cmake.definitions["PXR_HEADLESS_TEST_MODE"] = True
@@ -101,7 +104,7 @@ class USDConan(ConanFile):
         self._cmake.definitions["PXR_ENABLE_METAL_SUPPORT"] = False
         self._cmake.definitions["PXR_ENABLE_VULKAN_SUPPORT"] = False
         self._cmake.definitions["PXR_ENABLE_GL_SUPPORT"] = False
-        self._cmake.definitions["PXR_ENABLE_PRECOMPILED_HEADERS"] = True
+        self._cmake.definitions["PXR_ENABLE_PRECOMPILED_HEADERS"] = False
         self._cmake.definitions["BUILD_SHARED_LIBS"] = True
         self._cmake.definitions["PXR_BUILD_MONOLITHIC"] = False
 
