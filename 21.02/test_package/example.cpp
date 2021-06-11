@@ -7,7 +7,7 @@
 
 // pxrInternal_v0_21__pxrReserved__::UsdStage::Open(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, pxrInternal_v0_21__pxrReserved__::UsdStage::InitialLoadSet)
 //
-//#include <iostream>
+#include <iostream>
 //#include <string>
 
 int main(int argc, char *argv[]) {
