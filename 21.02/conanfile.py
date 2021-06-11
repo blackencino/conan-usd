@@ -70,6 +70,7 @@ class USDConan(ConanFile):
             return self._cmake
         self._cmake = CMake(self)
 
+        self._cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = True
         self._cmake.definitions["PXR_STRICT_BUILD_MODE"] = False
         self._cmake.definitions["PXR_VALIDATE_GENERATED_CODE"] = False
         self._cmake.definitions["PXR_HEADLESS_TEST_MODE"] = True
@@ -101,7 +102,7 @@ class USDConan(ConanFile):
         self._cmake.definitions["PXR_ENABLE_METAL_SUPPORT"] = False
         self._cmake.definitions["PXR_ENABLE_VULKAN_SUPPORT"] = False
         self._cmake.definitions["PXR_ENABLE_GL_SUPPORT"] = False
-        self._cmake.definitions["PXR_ENABLE_PRECOMPILED_HEADERS"] = True
+        self._cmake.definitions["PXR_ENABLE_PRECOMPILED_HEADERS"] = False
         self._cmake.definitions["BUILD_SHARED_LIBS"] = True
         self._cmake.definitions["PXR_BUILD_MONOLITHIC"] = False
 
