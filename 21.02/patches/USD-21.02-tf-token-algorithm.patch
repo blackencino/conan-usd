@@ -9,3 +9,15 @@ diff -Naur a/pxr/base/tf/token.cpp b/pxr/base/tf/token.cpp
  #include <string>
  #include <ostream>
  #include <vector>
+diff -Naur a/pxr/base/trace/eventTreeBuilder.cpp b/pxr/base/trace/eventTreeBuilder.cpp
+--- a/pxr/base/trace/eventTreeBuilder.cpp	2021-06-11 01:29:30.948038800 -0700
++++ b/pxr/base/trace/eventTreeBuilder.cpp	2021-06-11 01:37:48.887415500 -0700
+@@ -28,6 +28,8 @@
+ 
+ #include "pxr/base/trace/trace.h"
+ 
++#include <algorithm>
++
+ PXR_NAMESPACE_OPEN_SCOPE
+ 
+ Trace_EventTreeBuilder::Trace_EventTreeBuilder() 
